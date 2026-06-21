@@ -11,13 +11,20 @@ public class CSDoom extends ApplicationAdapter {
     SpriteBatch batch;
     BitmapFont font;
     RaycastEngine engine;
+    boolean engineReady = false;
 
     @Override
     public void create() {
-        batch = new SpriteBatch();
-        font = new BitmapFont();
-        font.setColor(Color.WHITE);
-        engine = new RaycastEngine();
+        try {
+            batch = new SpriteBatch();
+            font = new BitmapFont();
+            font.setColor(Color.WHITE);
+            font.getData().setScale(2f);
+            engine = new RaycastEngine();
+            engineReady = true;
+        } catch (Exception e) {
+            Gdx.app.log("CSDOOM", "Error: " + e.getMessage());
+        }
     }
 
     @Override
@@ -25,19 +32,31 @@ public class CSDoom extends ApplicationAdapter {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        engine.update(Gdx.graphics.getDeltaTime());
-        engine.render(batch);
+        if (!engineReady) {
+            batch.begin();
+            font.draw(batch, "Loading...", 100, Gdx.graphics.getHeight() / 2);
+            batch.end();
+            return;
+        }
 
-        batch.begin();
-        font.draw(batch, "CS-DOOM", 10, Gdx.graphics.getHeight() - 10);
-        font.draw(batch, "HP: " + engine.getHealth(), 10, 30);
-        batch.end();
+        try {
+            engine.update(Gdx.graphics.getDeltaTime());
+            engine.render(batch);
+
+            batch.begin();
+            font.draw(batch, "HP: " + engine.getHealth(), 10, Gdx.graphics.getHeight() - 10);
+            batch.end();
+        } catch (Exception e) {
+            batch.begin();
+            font.draw(batch, "Error: " + e.getMessage(), 10, Gdx.graphics.getHeight() / 2);
+            batch.end();
+        }
     }
 
     @Override
     public void dispose() {
-        batch.dispose();
-        font.dispose();
-        engine.dispose();
+        if (batch != null) batch.dispose();
+        if (font != null) font.dispose();
+        if (engine != null) engine.dispose();
     }
 }
